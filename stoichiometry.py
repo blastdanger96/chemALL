@@ -1,59 +1,124 @@
 print("Hello, to the chemistry world!")
+molecule = input("Enter the formula of your element: ")
 
 import re
 from typing import Dict, List, Tuple
 import numpy as np
+from mendeleev import element
 
 class ChemFormulaParser:
     # Parsing chemical formulas including brackets
     @staticmethod
-    def parseform(formula: str) -> Dict[str, int]:
-        """ 
+    def parseformula(formula: str) -> Dict[str, int]:
+        """ AIM:-
         Parsing chemical formula into element counts. 
-        Ex:- ChemFormulaParser.parseform("K4[Fe(CN)6]") ==> {'K': 4, 'Fe': 1, 'C': 6, 'N': 6}
+        Ex:- ChemFormulaParser.parseform("K4[Fe(CN)6]") -> {'K': 4, 'Fe': 1, 'C': 6, 'N': 6}
         """
-        
-        def parseSUBform(sub_form: str) -> Dict[str, int]:
-            element_counts: Dict[str, int] = {}
-            pattern = r'([A-Z][a-z]*)(\d*)'
-            for element, count in re.findall(pattern, sub_form):
-                if element:
-                    num = int(count) if count else 1
-                    element_counts[element] = element_counts.get(element, 0) + num
-            return element_counts  # FIX: Unindented so it returns after the loop finishes
 
-        def multiply_counts(
-                    counts: Dict[str, int], factor: int) -> Dict[str, int]:  # FIX: factor type hint changed to int
-            return {elem: cnt * factor for elem, cnt in counts.items()}
+        # Step 1:- Convert sq. brackets into standard parentheses
+        formula = formula.replace('[','(')
+        formula = formula.replace(']',')')
 
-        def merge_counts(c1: Dict[str, int], c2: Dict[str, int]) -> Dict[str, int]:  # FIX: 'Dist' corrected to 'Dict'
-            merged = c1.copy()
-            for elem, cnt in c2.items():
-                merged[elem] = merged.get(elem, 0) + cnt
-            return merged
+        #Step 2:- Convert curly brackets into standard parentheses
+        formula = formula.replace('{','(')
+        formula = formula.replace('}',')')
 
-        # Normalize brackets types
-        formula = formula.replace('[','(').replace(']',')')
+        #Step 3:- Start with an empty dict
+        stack = [{}]
 
-        # Regex to process inner nested brackets
-        bracket_pattern = r'\(([^()]+)\)(\d*)'  # FIX: Added the missing backslash to properly match the closing parenthesis
-        
-        while '(' in formula:
-            match = re.search(bracket_pattern, formula)
-            if not match:
-                break
-            sub_content = match.group(1)
-            multiplier = int(match.group(2)) if match.group(2) else 1
+        i = 0 # start tracking indice of string compound
+        length = len(formula)
 
-            # FIX: Everything below here must be indented to run INSIDE the while loop!
-            sub_content = parseSUBform(sub_content) 
-            scaled_counts = multiply_counts(sub_content, multiplier)  # FIX: Corrected function name 'multiplier_counnts' and matched variable name 'scaled_counts'
+        while i < length:
+            char = formula[i]
 
-            placeholder_parts = []
-            for elem, cnt in scaled_counts.items():
-                placeholder_parts.append(f"{elem}{cnt}")
+            #Case 1:- Opening brackets
+            if char == '(':
+                stack.append({})
+                i += 1
 
-            replacement = "".join(placeholder_parts)
-            formula = formula[:match.start()] + replacement + formula[match.end():]
+            #Case 2:- Closing brackets tell closed section Fe2(SO4)3, meaning S->3 and O->4*3
+            elif char == ')':
+                if len(stack) <= 1: #In the case of showing error
+                    raise ValueError("invalid closing of bracket at index number", i)
 
-        return parseSUBform(formula)  # FIX: Changed from parseform() to parseSUBform() to avoid infinite recursion
+                i += 1
+                start_num = i 
+
+                #while loop is applying for numbers having 2 or 3 digits like C6H12O6
+                while i<length and formula[i].isdigit(): 
+                    i += 1
+
+                """in chemistry, molecules sometimes have assigned value of them (liek H20, where H has 2)
+                but then oxygen doesn't have any number behind it, doesn't mean its invalid, just means it has one atom"""
+                if start_num < i:
+                    multiplier = int(formula[start_num:i])
+                else:
+                    multiplier = 1
+
+                inner_grp = stack.pop() # converting it into it's own dict
+                parents_grp = stack[len(stack)-1]
+                for element, count in inner_grp.items():
+                    currcount = parents_grp.get(element,0)
+                    parents_grp[element] = currcount + count * multiplier
+
+            elif char.isupper(): # Upper letter means we found an element's symbol (O)
+                start_element = i
+                i += 1
+                
+
+                while i<length and formula[i].islower(): # the lowercase letter will be merged witht the element
+                    i += 1
+                element_symbol = formula[start_element:i]
+
+                start_num = i
+                while i < length and formula[i].isdigit():
+                    i += 1
+
+                if start_num < i:
+                    element_count = int(formula[start_num:i])# FIX start_element -> start_num as python tries to slice the letter and converts it to a int which crashes it
+                else:
+                    element_count = 1
+
+                # Add this element's count to the top of the stack
+                current_group = stack[-1]
+                current_group[element_symbol] = current_group.get(element_symbol, 0) + element_count
+
+            else:
+                i += 1
+
+        return stack[0]
+
+
+print(ChemFormulaParser.parseformula(molecule))
+
+class moleSolver:
+    @staticmethod
+    def molar_mass(formula: str) -> float:
+        elements = ChemFormulaParser.parseformula(formula)
+        total_mass = 0.0
+
+        # Look up the mass using mendeleev library
+        for symbol, count in elements.items():
+            el = element(symbol)
+            total_mass += el.mass * count
+
+        # FIXED: Un-indented return statement so it calculates the full molecule mass AFTER the loop finishes
+        return total_mass
+
+    @staticmethod
+    def atomic_no(formula: str) -> list[int]:
+        elements = ChemFormulaParser.parseformula(formula)
+        atomic_no = []
+        for symbol in elements.keys():
+            el = element(symbol)
+            atomic_no.append(el.atomic_number)
+
+        return atomic_no
+
+# Define a sample molecule variable so Python knows what it is
+molecule = "K4[Fe(CN)6]"
+
+# FIXED: Changed calculate_molar_mass to molar_mass to match your function definition above
+print(f"Molar mass of {molecule}: {moleSolver.molar_mass(molecule)} g/mol")
+print("Atomic numbers", molecule, ":", moleSolver.atomic_no(molecule))
