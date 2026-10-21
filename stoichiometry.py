@@ -1,6 +1,3 @@
-print("Hello, to the chemistry world!")
-molecule = input("Enter the formula of your element: ")
-
 import re
 from typing import Dict, List, Tuple
 import numpy as np
@@ -89,9 +86,6 @@ class ChemFormulaParser:
 
         return stack[0]
 
-
-print(ChemFormulaParser.parseformula(molecule))
-
 class moleSolver:
     @staticmethod
     def molar_mass(formula: str) -> float:
@@ -115,10 +109,12 @@ class moleSolver:
             atomic_no.append(el.atomic_number)
 
         return atomic_no
+while True:
+    print("Hello, to the chemistry world!")
+    molecule = input("Enter the formula of your element: ")
+    print(ChemFormulaParser.parseformula(molecule))
 
-# Define a sample molecule variable so Python knows what it is
-molecule = "K4[Fe(CN)6]"
+    # FIXED: Changed calculate_molar_mass to molar_mass to match your function definition above
+    print(f"Molar mass of {molecule}: {moleSolver.molar_mass(molecule)} g/mol")
+    print("Atomic numbers", molecule, ":", moleSolver.atomic_no(molecule))
 
-# FIXED: Changed calculate_molar_mass to molar_mass to match your function definition above
-print(f"Molar mass of {molecule}: {moleSolver.molar_mass(molecule)} g/mol")
-print("Atomic numbers", molecule, ":", moleSolver.atomic_no(molecule))
