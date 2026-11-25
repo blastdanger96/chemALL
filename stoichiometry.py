@@ -109,12 +109,73 @@ class moleSolver:
             atomic_no.append(el.atomic_number)
 
         return atomic_no
-while True:
-    print("Hello, to the chemistry world!")
-    molecule = input("Enter the formula of your element: ")
-    print(ChemFormulaParser.parseformula(molecule))
 
-    # FIXED: Changed calculate_molar_mass to molar_mass to match your function definition above
-    print(f"Molar mass of {molecule}: {moleSolver.molar_mass(molecule)} g/mol")
-    print("Atomic numbers", molecule, ":", moleSolver.atomic_no(molecule))
+print("Hello, to the chemistry world!")
+molecule = input("Enter the formula of your compound of choice: ")
+print(ChemFormulaParser.parseformula(molecule))
 
+# FIXED: Changed calculate_molar_mass to molar_mass to match your function definition above
+print(f"Molar mass of {molecule}: {moleSolver.molar_mass(molecule)} g/mol")
+print("Atomic numbers", molecule, ":", moleSolver.atomic_no(molecule))
+
+class chemreaction:
+    @staticmethod
+    def chem_reaction():
+
+        dict_reactant = {}
+        dict_products = {}
+
+        """elements = ChemFormulaParser.parseformula(formula)
+        elements2 = ChemFormulaParser.parseformula(formula)"""
+
+        noreactants = int(input("How many reactants do you have in your reaction?"))
+        noproducts = int(input("How many products do you have in your reaction?"))
+
+        for reactants in range (noreactants):
+            reactants = input("Enter the reactant")
+            parsedreactants = ChemFormulaParser.parseformula(reactants)
+            for element, count in parsedreactants.items():
+                dict_reactant[element] = (
+                    dict_reactant.get(element, 0) + count
+                )
+                
+                #using dict_reactant[elements] = count is only possible for single compounds as it is prone to overwrites
+                # we use .get funct of dicts to prevent the code from crashing in case it tries to access an nonexistant key, which would have returned error
+            
+        for products in range (noproducts):
+            products = input("Enter the products")
+            parsedproducts = ChemFormulaParser.parseformula(products)
+            for element, count in parsedproducts.items():
+                dict_products[element] = (
+                    dict_products.get(element, 0)  + count
+                )
+
+        print("Reactants present include:- ", dict_reactant)
+        print("Products present include:- ", dict_products)
+
+        #we will be using sets and specifically an operation function of it called union operation of sets (denoted in math by U but in python with |)
+        all_elements = set(dict_reactant.keys()) | set(dict_products.keys())
+        
+        for element in all_elements:
+            reactant_count = dict_reactant.get(element, 0)
+            product_count = dict_products.get(element, 0)
+
+
+            if reactant_count == product_count:
+                print(f"{element}is balanced!")
+            else:
+                print(f"{element} is not balanced.")
+                
+        # Here we have used nested loops to prevent repetition by asking the user for input, and adding the number of moles to mol_products/reactants
+        # We can assume two cases, i) mol_products = mol_reactants and ii) mol_product != mole_reactants
+
+        """if moles_products == moles_reactants:
+            print("The reaction is already balanced!")
+        else:
+            print("The reaction is not balanced, hence we need to properly balance it using hit and trial method.")"""
+            
+                
+chemreaction.chem_reaction()
+
+
+            
